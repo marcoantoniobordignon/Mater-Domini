@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model cliente {
+  id                   Int       @default(autoincrement())
+  cpf                  String    @unique @db.Char(14)
+  nome                 String    @db.VarChar(20)
+  sobrenome            String    @db.VarChar(20)
+  senha                String    @db.VarChar(255)
+  telefone             String    @db.VarChar(20)
+  tipoPessoa           String    @db.Char(2)
+  token                String    @unique @db.VarChar(128)
+  sexo                 String    @db.Char(1) // M => masculino ; F => feminino
+  data_de_nascimento   DateTime  @db.Date
+  email                String    @unique @db.VarChar(50)
+  cashback             Decimal?  @db.Decimal(5, 2)
+  funcao               String?   @default("user") @db.VarChar(20)
+  data_primeira_compra DateTime? @default(dbgenerated("(now())")) @db.Date
+  quantidade_compras   Int?      @default(0)
+
+  @@id([id])
+}
+
+model produto {
+  id                    Int      @id @default(autoincrement())
+  nome                  String   @unique(map: "nome") @db.VarChar(40)
+  id_categoria          Int
+  Promocao              Boolean  @default(false)
+  Porcentagem_promocao  Int      @default(0)
+  preco                 Decimal  @db.Decimal(5, 2)
+  quantidade_em_estoque Int
+  codigo_fornecedor     Int      
+  descricao             String?  @db.Text
+  rating                Decimal? @db.Decimal(2, 1)
+  imgURL                String   @default("")
+  itens_venda           item_venda[]
+
+  categoria             categoria    @relation(fields: [id_categoria], references: [id])
+}
+
+model categoria {
+  id                    Int      @id @default(autoincrement())
+  nome                  String   @unique @db.VarChar(30)
+
+  produto               produto[]
+}
+
+model venda {
+  id                 Int       @id @default(autoincrement())
+  id_cliente         Int
+  data_venda         DateTime  @default(now())
+  forma_de_pagamento String    @db.VarChar(30)
+
+  itens              item_venda[]
+
+  @@index([id_cliente])
+}
+
+model item_venda {
+  id                 Int      @id @default(autoincrement())
+  id_venda           Int
+  id_produto         Int
+
+  quantidade         Int
+  preco_unitario     Decimal  @db.Decimal(10,2) // SNAPSHOT
+  subtotal           Decimal  @db.Decimal(10,2)
+
+  venda              venda    @relation(fields: [id_venda], references: [id])
+  produto            produto  @relation(fields: [id_produto], references: [id])
+
+  @@index([id_venda])
+  @@index([id_produto])
+}
+
+model fornecedor {
+  codigo_fornecedor Int    
+  cnpj              String @db.VarChar(30)
+  nome              String @db.VarChar(40)
+  cidade            String @db.VarChar(20)
+  estado            String @db.VarChar(20)
+  pais              String @db.VarChar(20)
+
+  @@id([cnpj])
+}
